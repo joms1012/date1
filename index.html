@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Will You Be My Date?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Quicksand:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-pink: #fbaee5;
+      --btn-pink: #e254cb;
+      --btn-pink-hover: #d23ebb;
+      --text-magenta: #d9029d;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Quicksand', sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-pink);
+      overflow: hidden;
+      touch-action: manipulation;
+      min-height: 100vh;
+      width: 100vw;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    .hearts-bg {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(105vh) scale(0.8) rotate(0deg); opacity: 0.85; }
+      100% { transform: translateY(-10vh) scale(1.2) rotate(360deg); opacity: 0; }
+    }
+
+    .floating-heart {
+      position: absolute;
+      user-select: none;
+      pointer-events: none;
+      animation: floatUp linear infinite;
+    }
+
+    @keyframes pulseSparkle {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.9; }
+      50% { transform: scale(1.35) rotate(45deg); opacity: 1; }
+    }
+
+    .sparkle { animation: pulseSparkle 1.8s infinite ease-in-out; }
+
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      15% { transform: scale(1.15); }
+      30% { transform: scale(1); }
+      45% { transform: scale(1.15); }
+    }
+
+    .heart-badge {
+      position: fixed;
+      top: 18px;
+      right: 24px;
+      z-index: 5;
+      width: 64px;
+      height: 64px;
+      animation: heartBeat 2s infinite ease-in-out;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      height: 100vh;
+      text-align: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding: 24px 16px;
+      z-index: 2;
+      overflow-y: auto;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.35rem, 6vw, 4.5rem);
+      line-height: 1.08;
+      color: var(--text-magenta);
+      text-shadow: 0 2px 10px rgba(255, 255, 255, 0.5);
+      margin-bottom: 28px;
+      font-weight: 700;
+    }
+
+    .btn {
+      background-color: var(--btn-pink);
+      color: #ffffff;
+      border: none;
+      border-radius: 16px;
+      padding: 14px 30px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      box-shadow: 0 8px 22px rgba(217, 2, 157, 0.28);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease;
+      outline: none;
+    }
+
+    .btn:hover {
+      background-color: var(--btn-pink-hover);
+      transform: scale(1.05);
+      box-shadow: 0 10px 28px rgba(217, 2, 157, 0.4);
+    }
+
+    .btn-container {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .nav-btns {
+      margin-top: 28px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .cards-grid {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.26);
+      border: 3px solid rgba(255, 255, 255, 0.58);
+      border-radius: 24px;
+      width: 210px;
+      height: 235px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(180, 20, 120, 0.16);
+      transition: transform 0.2s ease, border 0.2s ease, background-color 0.2s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card.selected {
+      border-color: #ffffff;
+      background: var(--btn-pink);
+      transform: scale(1.05);
+    }
+
+    .card img {
+      width: 96px;
+      height: 96px;
+      object-fit: contain;
+      margin-bottom: 15px;
+      pointer-events: none;
+    }
+
+    .emoji-icon {
+      display: block;
+      font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+      font-size: 5rem;
+      line-height: 1;
+      margin-bottom: 15px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .card-check {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: white;
+      color: var(--text-magenta);
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .card.selected .card-check {
+      display: flex;
+    }
+
+    #no-btn {
+      position: relative;
+      transition: left 0.2s ease-out, top 0.2s ease-out, transform 0.2s ease;
+    }
+
+    .character-gif {
+      width: min(230px, 52vw);
+      height: min(230px, 52vw);
+      object-fit: contain;
+      margin-top: 22px;
+      border-radius: 24px;
+      filter: drop-shadow(0 12px 20px rgba(180, 20, 120, 0.25));
+      transition: transform 0.3s ease;
+    }
+
+    .character-gif:hover {
+      transform: scale(1.05);
+    }
+
+    .calendar-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border: 4px solid #f7c3e8;
+      border-radius: 28px;
+      padding: 18px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 18px 40px rgba(180, 20, 120, 0.2);
+      color: #3f3040;
+    }
+
+    .cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .cal-month {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #d33eb8;
+    }
+
+    .cal-nav {
+      background: #fce4f6;
+      color: #c22aa5;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+
+    .cal-day-label {
+      font-size: 0.8rem;
+      color: #d679c5;
+      font-weight: 800;
+      padding-bottom: 5px;
+    }
+
+    .cal-date {
+      padding: 9px 0;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: #604656;
+      font-weight: 700;
+    }
+
+    .cal-date:hover:not(.empty) {
+      background: #fce4f6;
+    }
+
+    .cal-date.selected {
+      background: var(--btn-pink) !important;
+      color: white !important;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(217, 2, 157, 0.4);
+    }
+
+    .time-picker-box {
+      margin-top: 15px;
+      padding-top: 12px;
+      border-top: 1px solid #f5d7ee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .time-input-field {
+      width: 50px;
+      padding: 6px;
+      border: 2px solid #f0a8dc;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    .ampm-toggle {
+      display: flex;
+      border: 2px solid #f0a8dc;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .ampm-btn {
+      padding: 6px 10px;
+      border: none;
+      background: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .ampm-btn.active {
+      background: var(--btn-pink);
+      color: white;
+    }
+
+    .summary-card {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 24px;
+      box-shadow: 0 18px 36px rgba(180, 20, 120, 0.2);
+      margin-top: 15px;
+      width: 100%;
+      max-width: 440px;
+      color: #333;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+      padding: 6px 0;
+      border-bottom: 1px dashed #f0f0f0;
+    }
+
+    .summary-label {
+      color: #777;
+      font-weight: bold;
+    }
+
+    .summary-val {
+      color: var(--text-magenta);
+      font-weight: 800;
+    }
+
+    @media (max-width: 600px) {
+      .screen { padding: 28px 12px 20px; }
+      .heart-badge { width: 48px; height: 48px; top: 12px; right: 14px; }
+      .title { margin-bottom: 20px; }
+      .card { width: min(44vw, 190px); height: 210px; }
+      .card img { width: 78px; height: 78px; }
+      .card-title { font-size: 0.95rem; }
+      .calendar-card { padding: 13px; }
+      .time-picker-box { gap: 6px; flex-wrap: wrap; }
+      .summary-card { padding: 16px 18px; }
+      .summary-item { gap: 16px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hearts-bg" aria-hidden="true">
+    <span class="floating-heart" style="left: 8%; animation-duration: 10s; animation-delay: 1s; font-size: 24px;">💖</span>
+    <span class="floating-heart" style="left: 22%; animation-duration: 13s; animation-delay: 4s; font-size: 18px;">💕</span>
+    <span class="floating-heart" style="left: 42%; animation-duration: 9s; animation-delay: 2s; font-size: 28px;">✨</span>
+    <span class="floating-heart" style="left: 66%; animation-duration: 12s; animation-delay: 5s; font-size: 20px;">💗</span>
+    <span class="floating-heart" style="left: 86%; animation-duration: 11s; animation-delay: 3s; font-size: 25px;">🌸</span>
+  </div>
+
+  <svg class="heart-badge" viewBox="0 0 100 100" aria-hidden="true">
+    <path d="M50 88C50 88 12 62 12 35C12 20 23 10 36 10C44 10 48 14 50 18C52 14 56 10 64 10C77 10 88 20 88 35C88 62 50 88 50 88Z" fill="#FF3B7B" />
+    <circle cx="30" cy="42" r="5" fill="#FF8BB2" />
+    <circle cx="70" cy="42" r="5" fill="#FF8BB2" />
+    <circle cx="37" cy="36" r="3.5" fill="#1A1A1A" />
+    <circle cx="63" cy="36" r="3.5" fill="#1A1A1A" />
+    <path d="M44 44C44 44 47 48 50 48C53 48 56 44 56 44" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round" />
+  </svg>
+
+  <form id="date-email-form" action="https://formsubmit.co/ajax/jomariperez17@gmail.com" method="POST" hidden>
+    <input type="hidden" name="_subject" value="New Date Plan 💖">
+    <input type="hidden" name="_template" value="table">
+    <input type="hidden" name="_captcha" value="false">
+    <input type="hidden" name="Activity" id="email-activity">
+    <input type="hidden" name="Location" id="email-location">
+    <input type="hidden" name="Date" id="email-date">
+    <input type="hidden" name="Time" id="email-time">
+    <input type="hidden" name="Snacks" id="email-snacks">
+    <input type="hidden" name="Beverage" id="email-beverage">
+  </form>
+  <!-- SCREEN 1: Proposal -->
+  <div class="screen active" id="screen-proposal">
+    <h1 class="title">Will you be my date?</h1>
+    <div class="btn-container">
+      <button class="btn" id="yes-btn" onclick="goToScreen('screen-activity')">YES</button>
+      <button class="btn" id="no-btn" onmouseover="dodgeNoButton()" onclick="dodgeNoButton()">NO</button>
+    </div>
+    
+  </div>
+
+  <!-- SCREEN 2: PICNIC OR MOVIE -->
+  <div class="screen" id="screen-activity">
+    <h1 class="title">PICNIC OR MOVIE</h1>
+    <div class="cards-grid">
+      <div class="card" onclick="selectActivity('Picnic', this)">
+        <div class="card-check">✓</div>
+        <span class="emoji-icon" role="img" aria-label="Picnic">🧺</span>
+        <div class="card-title">Picnic Date</div>
+      </div>
+      <div class="card" onclick="selectActivity('Movie', this)">
+        <div class="card-check">✓</div>
+        <span class="emoji-icon" role="img" aria-label="Movie">🍿</span>
+        <div class="card-title">Movie Date</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn" onclick="goToScreen('screen-proposal')">BACK</button>
+      <button class="btn" onclick="validateStep('screen-location', chosenActivity, 'Please select Picnic or Movie!')">NEXT</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: WHERE IS THIS? (SM TANZA OR ROBINSON GENTRI) -->
+  <div class="screen" id="screen-location">
+    <h1 class="title">WHERE IS THIS?</h1>
+    <div class="cards-grid" id="location-cards-container">
+      <!-- Dynamic Options populated by JavaScript -->
+    </div>
+    <div class="nav-btns">
+      <button class="btn" onclick="goToScreen('screen-activity')">BACK</button>
+      <button class="btn" onclick="validateStep('screen-datetime', chosenLocation, 'Please choose a location!')">NEXT</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: Pick a DATE & TIME -->
+  <div class="screen" id="screen-datetime">
+    <h1 class="title">Pick a DATE & TIME</h1>
+    
+    <div class="calendar-card">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="changeMonth(-1)">&lt;</button>
+        <div class="cal-month" id="cal-month-title">October 2026</div>
+        <button class="cal-nav" onclick="changeMonth(1)">&gt;</button>
+      </div>
+
+      <div class="cal-grid" id="cal-grid"></div>
+
+      <div class="time-picker-box">
+        <span style="font-size: 0.9rem; font-weight: bold; color: #666;">Time:</span>
+        <input type="number" id="time-hours" class="time-input-field" min="1" max="12" value="04">
+        <span style="font-weight: bold;">:</span>
+        <input type="number" id="time-minutes" class="time-input-field" min="0" max="59" value="30">
+        
+        <div class="ampm-toggle">
+          <button class="ampm-btn active" id="ampm-pm" onclick="setAmPm('PM')">PM</button>
+          <button class="ampm-btn" id="ampm-am" onclick="setAmPm('AM')">AM</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn" onclick="goToScreen('screen-location')">BACK</button>
+      <button class="btn" onclick="validateStep('screen-snacks', chosenDate, 'Please choose a date!')">NEXT</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 5: CHOOSE SNACKS -->
+  <div class="screen" id="screen-snacks">
+    <h1 class="title">CHOOSE SNACKS</h1>
+    <div class="cards-grid">
+      <div class="card" onclick="selectSnack('Popcorn & Chips', this)">
+        <div class="card-check">✓</div>
+        <span class="emoji-icon" role="img" aria-label="Popcorn">🍿</span>
+        <div class="card-title">Popcorn</div>
+      </div>
+      <div class="card" onclick="selectSnack('Chocolates', this)">
+        <div class="card-check">✓</div>
+        <span class="emoji-icon" role="img" aria-label="Chocolate">🍫</span>
+        <div class="card-title">Chocolates</div>
+      </div>
+      <div class="card" onclick="selectSnack('Pastries', this)">
+        <div class="card-check">✓</div>
+        <span class="emoji-icon" role="img" aria-label="Pastries">🍰</span>
+        <div class="card-title">Pastries</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn" onclick="goToScreen('screen-datetime')">BACK</button>
+      <button class="btn" onclick="validateStep('screen-beverage', chosenSnacks, 'Please select a snack!')">NEXT</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 6: CHOOSE BEVERAGE -->
+  <div class="screen" id="screen-beverage">
+    <h1 class="title">CHOOSE BEVERAGE</h1>
+    <div class="cards-grid">
+      <div class="card" onclick="selectBeverage('Boba Milk Tea', this)">
+        <div class="card-check">✓</div>
+        <span class="emoji-icon" role="img" aria-label="Boba tea">🧋</span>
+        <div class="card-title">Boba Tea</div>
+      </div>
+      <div class="card" onclick="selectBeverage('Iced Coffee', this)">
+        <div class="card-check">✓</div>
+        <span class="emoji-icon" role="img" aria-label="Coffee">☕</span>
+        <div class="card-title">Iced Coffee</div>
+      </div>
+      <div class="card" onclick="selectBeverage('Fruit Juice', this)">
+        <div class="card-check">✓</div>
+        <span class="emoji-icon" role="img" aria-label="Fruit juice">🧃</span>
+        <div class="card-title">Fruit Juice</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn" onclick="goToScreen('screen-snacks')">BACK</button>
+      <button class="btn" onclick="showCelebration()">NEXT</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 7: CELEBRATION SUMMARY -->
+  <div class="screen" id="screen-celebration">
+    <h1 class="title">IT'S A DATE! 🎉❤️️</h1>
+    <img src="dancing-cat-dance.gif" alt="Dancing Cat" class="character-gif">
+    
+    <div class="summary-card">
+      <div class="summary-item">
+        <span class="summary-label">Activity:</span>
+        <span class="summary-val" id="sum-activity">-</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Where:</span>
+        <span class="summary-val" id="sum-location">-</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Date:</span>
+        <span class="summary-val" id="sum-date">-</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Time:</span>
+        <span class="summary-val" id="sum-time">-</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Snacks:</span>
+        <span class="summary-val" id="sum-snacks">-</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Beverage:</span>
+        <span class="summary-val" id="sum-beverage">-</span>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn" onclick="openGmailDraft()">SEND TO GMAIL</button>
+      <button class="btn" onclick="location.reload()">Reset</button>
+    </div>
+  </div>
+
+  <script>
+    let chosenActivity = '';
+    let chosenLocation = '';
+    let chosenDate = 'October 14, 2026';
+    let chosenSnacks = '';
+    let chosenBeverage = '';
+    let selectedAmPm = 'PM';
+
+    const gifsList = [
+      'peach-goma-peach-and-goma.gif',
+      'good-deal-best.gif',
+      'cute-cat.gif',
+    ];
+    let dodgeCount = 0;
+
+    function dodgeNoButton() {
+      const noBtn = document.getElementById('no-btn');
+      const yesBtn = document.getElementById('yes-btn');
+      const reactionGif = document.getElementById('reaction-gif');
+
+      const x = (Math.random() - 0.5) * 200;
+      const y = (Math.random() - 0.5) * 120;
+      noBtn.style.transform = `translate(${x}px, ${y}px)`;
+
+      dodgeCount++;
+      yesBtn.style.transform = `scale(${1 + dodgeCount * 0.15})`;
+      reactionGif.src = gifsList[dodgeCount % gifsList.length];
+    }
+
+    function goToScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function validateStep(nextScreenId, val, alertMsg) {
+      if (!val) {
+        alert(alertMsg);
+        return;
+      }
+      goToScreen(nextScreenId);
+    }
+
+    function selectActivity(act, cardElem) {
+      chosenActivity = act;
+      chosenLocation = '';
+
+      cardElem.parentElement.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+      cardElem.classList.add('selected');
+
+      const container = document.getElementById('location-cards-container');
+      container.innerHTML = '';
+
+      if (act === 'Movie') {
+        container.innerHTML = `
+          <div class="card" onclick="selectLocation('SM TANZA', this)">
+            <div class="card-check">✓</div>
+            <span class="emoji-icon" role="img" aria-label="Movie theater">🎬</span>
+            <div class="card-title">SM TANZA</div>
+          </div>
+          <div class="card" onclick="selectLocation('ROBINSON GENTRI', this)">
+            <div class="card-check">✓</div>
+            <span class="emoji-icon" role="img" aria-label="Film projector">📽️</span>
+            <div class="card-title">ROBINSON GENTRI</div>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="card" onclick="selectLocation('Cozy Park', this)">
+            <div class="card-check">✓</div>
+            <span class="emoji-icon" role="img" aria-label="Park">🌳</span>
+            <div class="card-title">Cozy Park</div>
+          </div>
+          <div class="card" onclick="selectLocation('Seaside Beach', this)">
+            <div class="card-check">✓</div>
+            <span class="emoji-icon" role="img" aria-label="Beach">🏖️</span>
+            <div class="card-title">Seaside Beach</div>
+          </div>
+        `;
+      }
+    }
+
+    function selectLocation(loc, cardElem) {
+      chosenLocation = loc;
+      cardElem.parentElement.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+      cardElem.classList.add('selected');
+    }
+
+    function selectSnack(snack, cardElem) {
+      chosenSnacks = snack;
+      cardElem.parentElement.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+      cardElem.classList.add('selected');
+    }
+
+    function selectBeverage(bev, cardElem) {
+      chosenBeverage = bev;
+      cardElem.parentElement.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+      cardElem.classList.add('selected');
+    }
+
+    let currentMonth = 9;
+    let currentYear = 2026;
+
+    function renderCalendar() {
+      const grid = document.getElementById('cal-grid');
+      const title = document.getElementById('cal-month-title');
+      grid.innerHTML = '';
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      title.innerText = `${monthNames[currentMonth]} ${currentYear}`;
+
+      ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => {
+        const lbl = document.createElement('div');
+        lbl.className = 'cal-day-label';
+        lbl.innerText = d;
+        grid.appendChild(lbl);
+      });
+
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-date empty';
+        grid.appendChild(empty);
+      }
+
+      for (let day = 1; day <= totalDays; day++) {
+        const dateCell = document.createElement('div');
+        dateCell.className = 'cal-date';
+        dateCell.innerText = day;
+
+        const dateString = `${monthNames[currentMonth]} ${day}, ${currentYear}`;
+        if (dateString === chosenDate) {
+          dateCell.classList.add('selected');
+        }
+
+        dateCell.onclick = () => {
+          chosenDate = dateString;
+          document.querySelectorAll('.cal-date').forEach(c => c.classList.remove('selected'));
+          dateCell.classList.add('selected');
+        };
+
+        grid.appendChild(dateCell);
+      }
+    }
+
+    function changeMonth(delta) {
+      currentMonth += delta;
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      renderCalendar();
+    }
+
+    function setAmPm(val) {
+      selectedAmPm = val;
+      document.getElementById('ampm-am').classList.toggle('active', val === 'AM');
+      document.getElementById('ampm-pm').classList.toggle('active', val === 'PM');
+    }
+
+    function showCelebration() {
+      if (!chosenBeverage) {
+        alert('Please select a beverage!');
+        return;
+      }
+
+      const hh = document.getElementById('time-hours').value || '04';
+      const mm = document.getElementById('time-minutes').value || '30';
+      const selectedTime = `${hh}:${mm} ${selectedAmPm}`;
+
+      document.getElementById('sum-activity').innerText = chosenActivity;
+      document.getElementById('sum-location').innerText = chosenLocation;
+      document.getElementById('sum-date').innerText = chosenDate;
+      document.getElementById('sum-time').innerText = selectedTime;
+      document.getElementById('sum-snacks').innerText = chosenSnacks;
+      document.getElementById('sum-beverage').innerText = chosenBeverage;
+
+      document.getElementById('email-activity').value = chosenActivity;
+      document.getElementById('email-location').value = chosenLocation;
+      document.getElementById('email-date').value = chosenDate;
+      document.getElementById('email-time').value = selectedTime;
+      document.getElementById('email-snacks').value = chosenSnacks;
+      document.getElementById('email-beverage').value = chosenBeverage;
+      sendDateEmail();
+
+      goToScreen('screen-celebration');
+    }
+
+    async function sendDateEmail() {
+      const emailForm = document.getElementById('date-email-form');
+
+      try {
+        const response = await fetch(emailForm.action, {
+          method: 'POST',
+          body: new FormData(emailForm),
+          headers: { Accept: 'application/json' }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Email service returned ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.message || 'Email service rejected the request');
+        }
+
+        alert('Your date details were sent to Gmail!');
+      } catch (error) {
+        openGmailDraft();
+        console.error(error);
+      }
+    }
+
+    function openGmailDraft() {
+      const body = [
+        'New Date Plan 💖',
+        '',
+        `Activity: ${chosenActivity}`,
+        `Location: ${chosenLocation}`,
+        `Date: ${chosenDate}`,
+        `Time: ${document.getElementById('email-time').value}`,
+        `Snacks: ${chosenSnacks}`,
+        `Beverage: ${chosenBeverage}`
+      ].join('\n');
+
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=jomariperez17@gmail.com&su=${encodeURIComponent('New Date Plan 💖')}&body=${encodeURIComponent(body)}`;
+      const composeWindow = window.open(gmailUrl, '_blank');
+
+      if (!composeWindow) {
+        alert('Please allow pop-ups, then click the Send to Gmail button again.');
+      } else {
+        alert('Gmail opened with your date details. Please click Send.');
+      }
+    }
+
+    window.onload = () => {
+      renderCalendar();
+    };
+  </script>
+</body>
+</html>
